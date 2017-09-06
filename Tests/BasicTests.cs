@@ -53,5 +53,52 @@ namespace Tests
 
             Assert.AreEqual(s1["name"], s2["name"]);
         }
+
+        [TestMethod]
+        public void IDisposable()
+        {
+            using (var dict = new RDictionary<string, int>("intValues"))
+            {
+                dict["42"] = 42;
+            }
+        }
+
+        [TestMethod]
+        public void SerializerRequiredException()
+        {
+            Assert.ThrowsException<SerializerRequiredException>(() =>
+            {
+                var dict = new RDictionary<string, CustomType>("rdict");
+            });
+
+            Assert.ThrowsException<SerializerRequiredException>(() =>
+            {
+                var dict = new RDictionary<CustomType, string>("rdict");
+            });
+        }
+
+        [TestMethod]
+        public void BasicSerialization()
+        {
+            var dict = new RDictionary<int, int>("intDict");
+            dict[42] = 42;
+
+            Assert.AreEqual(42, dict[42]);
+        }
+
+        [TestMethod]
+        public void ExternalSerializer()
+        {
+            var dict = new RDictionary<int, CustomType, CustomSerializer, CustomSerializer>("intDict");
+
+            var key = new CustomType
+            {
+                Value = 42
+            };
+
+            dict[42] = key;
+
+            Assert.AreEqual(42, dict[42].Value);
+        }
     }
 }

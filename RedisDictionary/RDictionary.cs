@@ -7,10 +7,38 @@ using System.Linq;
 
 namespace NeoSmart.Redis
 {
+    public class RDictionary<K, V> : RDictionary<K, V, BasicSerializer<K>, BasicBidirectionalSerializer<V>>
+    {
+        public RDictionary(string name, ConfigurationOptions connectionOptions = null, int database = -1)
+            : base(name, connectionOptions, database)
+        { }
+    }
+
+    //We can only define a single variant that takes only one serializer, either we specify only the key serializer or only the value serializer
+#if false
+    public class RDictionary<K, V, S1> : RDictionary<K, V, S1, BasicBidirectionalSerializer<V>>
+        where S1 : ISerializer<K, string>, new()
+    {
+        public RDictionary(string name, ConfigurationOptions connectionOptions = null, int database = -1)
+            : base(name, connectionOptions, database)
+        { }
+    }
+#endif
+
+    public class RDictionary<K, V, S2> : RDictionary<K, V, BasicSerializer<K>, S2>
+        where S2 : IBidirectionalSerialiver<V, RedisValue>, new()
+    {
+        public RDictionary(string name, ConfigurationOptions connectionOptions = null, int database = -1)
+            : base(name, connectionOptions, database)
+        { }
+    }
+
     /// <summary>
     /// A redis-backed dictionary
     /// </summary>
-    public class RDictionary<K, V> : IDictionary<K, V>, IDisposable
+    public class RDictionary<K, V, S1, S2> : IDictionary<K, V>, IDisposable
+        where S1: ISerializer<K, string>, new()
+        where S2: IBidirectionalSerialiver<V, RedisValue>, new()
     {
         ConnectionMultiplexer _redis = null;
         Func<dynamic, string> _kserializer;
@@ -20,66 +48,31 @@ namespace NeoSmart.Redis
         uint _hash;
         IDatabase _db;
 
-        public RDictionary(string name, ConfigurationOptions connectionOptions = null, int database = -1, Serializer<K, string> keySerializer = null, Serializer<V, RedisValue> valueSerializer = null)
+        public RDictionary(string name, ConfigurationOptions connectionOptions = null, int database = -1)
         {
             var options = connectionOptions ?? ConfigurationOptions.Parse("localhost");
             _redis = ConnectionMultiplexer.Connect(options);
             _hash = XXHash32.Hash(name);
             _db = _redis.GetDatabase(database);
 
-            SetKeySerializer(keySerializer);
-            SetValueSerializer(valueSerializer);
+            try
+            {
+                var s1 = new S1();
+                var s2 = new S2();
+
+                _kserializer = k => s1.Serialize(k);
+                _vserializer = v => s2.Serialize(v);
+                _vdeserializer = v => s2.Deserialize(v);
+            }
+            catch (System.Reflection.TargetInvocationException ex)
+            {
+                throw ex.InnerException;
+            }
         }
 
         public RDictionary(string name, string connectionString, int database = -1)
             : this(name, ConfigurationOptions.Parse(connectionString), database)
         {
-        }
-
-        private void SetKeySerializer(Serializer<K, string> serializer)
-        {
-            if (serializer != null)
-            {
-                _kserializer = k => serializer.Serialize(k);
-                return;
-            }
-
-            if (typeof(K) == typeof(string))
-            {
-                _kserializer = k => k;
-            }
-            else
-            {
-                throw new SerializerRequiredException(typeof(K), typeof(string));
-            }
-        }
-
-        private void SetValueSerializer(Serializer<V, RedisValue> serializer)
-        {
-            if (serializer != null)
-            {
-                _vserializer = v => serializer.Serialize(v);
-                return;
-            }
-
-            var implictTypes = new Type[] { typeof(bool), typeof(bool?), typeof(int), typeof(int?), typeof(long), typeof(long?), typeof(double), typeof(double?), typeof(string), typeof(byte[]) };
-            if (implictTypes.Contains(typeof(V)))
-            {
-                _vserializer = v => v;
-            }
-            else
-            {
-                throw new SerializerRequiredException(typeof(V), typeof(RedisValue));
-            }
-
-            if (implictTypes.Contains(typeof(V)))
-            {
-                _vdeserializer = v => v;
-            }
-            else
-            {
-                throw new SerializerRequiredException(typeof(RedisValue), typeof(V));
-            }
         }
 
         private string CreateKey(K key) => $"{_hash}-{_kserializer(key)}";
