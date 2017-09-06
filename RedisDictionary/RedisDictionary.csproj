@@ -18,6 +18,7 @@
     <PackageTags>redis, persistent, persistentdictionary, rdictionary</PackageTags>
     <PackageReleaseNotes>Initial release</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\NeoSmart.Redis.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

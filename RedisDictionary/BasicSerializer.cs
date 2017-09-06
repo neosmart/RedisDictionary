@@ -4,10 +4,17 @@ using System.Text;
 
 namespace NeoSmart.Redis
 {
+    /// <summary>
+    /// The default <code>ISerializer</code> implementation used by <see cref="RDictionary{K, V}"/> for key serialization.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class BasicSerializer<T> : ISerializer<T, string>
     {
         private Func<dynamic, string> _serializer;
 
+        /// <summary>
+        /// Creates a new <see cref="BasicSerializer{T}"/> instance.
+        /// </summary>
         public BasicSerializer()
         {
             if (typeof(T) == typeof(string))
@@ -24,6 +31,11 @@ namespace NeoSmart.Redis
             }
         }
 
+        /// <summary>
+        /// Serializes <paramref name="t"/> to a <code>string</code>.
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
         public string Serialize(T t)
         {
             return _serializer(t);
