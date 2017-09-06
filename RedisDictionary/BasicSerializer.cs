@@ -7,7 +7,6 @@ namespace NeoSmart.Redis
     public class BasicSerializer<T> : ISerializer<T, string>
     {
         private Func<dynamic, string> _serializer;
-        private Func<string, dynamic> _deserializer;
 
         public BasicSerializer()
         {

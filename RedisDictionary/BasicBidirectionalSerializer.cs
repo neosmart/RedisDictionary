@@ -8,8 +8,6 @@ namespace NeoSmart.Redis
 {
     public class BasicBidirectionalSerializer<T> : ISerializer<T, RedisValue>, IDeserializer<RedisValue, T>, IBidirectionalSerialiver<T, RedisValue>
     {
-        private Func<dynamic, string> _serializer;
-        private Func<string, dynamic> _deserializer;
         private static Type[] ImplictTypes = new Type[] { typeof(bool), typeof(bool?), typeof(int), typeof(int?), typeof(long), typeof(long?), typeof(double), typeof(double?), typeof(string), typeof(byte[]) };
 
         public BasicBidirectionalSerializer()
