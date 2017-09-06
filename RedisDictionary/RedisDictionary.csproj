@@ -2,6 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp1.1</TargetFramework>
+    <AssemblyName>NeoSmart.Redis</AssemblyName>
+    <RootNamespace>NeoSmart.Redis</RootNamespace>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="StackExchange.Redis" Version="1.2.6" />
+    <PackageReference Include="xxHash.Core" Version="0.3.0" />
+  </ItemGroup>
 
 </Project>
